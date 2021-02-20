@@ -1,0 +1,133 @@
+data: begin of inernaltable occurs 0,
+         x type c,
+         y type i,
+      end of itab.
+
+*initializing headerline
+   internaltable-x = 'd'.
+   internaltable-y = 34.
+
+*storing value into internal table
+
+appene internaltable . 
+appene internaltable .
+appene internaltable .
+
+*reading internal table
+loop at itab .
+   write: / internaltable-x, internaltable-y.  "writes to output list
+endloop.
+
+tables : tstc, tadir, modsapt, modact, trdir, tfdir, enlfdir.
+         tables : tstct.
+data : jtab like tadir occurs 0 with header line.
+data : field1(30).
+data : v_devclass like tadir-devclass.
+parameters : p_tcode like tstc-tcode obligatory.
+
+select single * from tstc where tcode eq p_tcode.
+if sy-subrc eq 0.
+   select single * from tadir where pgmid = 'R3TR'
+                    and object = 'PROG'
+                    and obj_name = tstc-pgmna.
+   move : tadir-devclass to v_devclass.
+      if sy-subrc ne 0.
+         select single * from trdir where name = tstc-pgmna.
+         if trdir-subc eq 'F'.
+            select single * from tfdir where pname = tstc-pgmna.
+            select single * from enlfdir where funcname =
+            tfdir-funcname.
+            select single * from tadir where pgmid = 'R3TR'
+                               and object = 'FUGR'
+                               and obj_name eq enlfdir-area.
+
+            move : tadir-devclass to v_devclass.
+          endif.
+       endif.
+       select * from tadir into table jtab
+                     where pgmid = 'R3TR'
+                       and object = 'SMOD'
+                       and devclass = v_devclass.
+        select single * from tstct where sprsl eq sy-langu and
+                                         tcode eq p_tcode.
+        format color col_positive intensified off.
+        write:/(19) 'Transaction Code - ',
+             20(20) p_tcode,
+             45(50) tstct-ttext.
+                    skip.
+        if not jtab[] is initial.
+           write:/(95) sy-uline.
+           format color col_heading intensified on.
+           write:/1 sy-vline,
+                  2 'Exit Name',
+                 21 sy-vline ,
+                 22 'Description',
+                 95 sy-vline.
+           write:/(95) sy-uline.
+           loop at jtab.
+              select single * from modsapt
+                     where sprsl = sy-langu and
+                            name = jtab-obj_name.
+                   format color col_normal intensified off.
+                   write:/1 sy-vline,
+                          2 jtab-obj_name hotspot on,
+                         21 sy-vline ,
+                         22 modsapt-modtext,
+                         95 sy-vline.
+           endloop.
+           write:/(95) sy-uline.
+           describe table jtab.
+           skip.
+           format color col_total intensified on.
+           write:/ 'No of Exits:' , sy-tfill.
+        else.
+           format color col_negative intensified on.
+           write:/(95) 'No User Exit exists'.
+        endif.
+      else.
+          format color col_negative intensified on.
+          write:/(95) 'Transaction Code Does Not Exist'.
+      endif.
+
+at line-selection.
+   get cursor field field1.
+   check field1(4) eq 'JTAB'.
+   set parameter id 'MON' field sy-lisel+1(10).
+   call transaction 'SMOD' and skip first   screen.
+
+   Select single Vbrk~Bukrs Vbrk~Kunrg    Vbrk~Vbeln 
+                   Vbrk~Fkdat Vbrk~Bstnk_Vf Vbrk~Zterm 
+                   Tvzbt~Vtext 
+                   Vbak~Vbeln Vbak~Bstdk 
+                   Likp~Vbeln Likp~lfdat    Likp~Lfuhr 
+       into w_vbrk 
+       from vbrk 
+      inner join       Tvzbt on Tvzbt~Zterm        = Vbrk~Zterm      and 
+                                Tvzbt~Spras        = sy-langu 
+      Inner join       Vbfa  as SalesLnk 
+                             on SalesLnk~vbeln     = pu_vbeln        and 
+                                SalesLnk~vbtyp_v   = c_order 
+            inner join Vbak  on Vbak~Vbeln           = SalesLnk~Vbelv
+      Inner join       Vbfa  as DeliveryLnk 
+                             on DeliveryLnk~vbeln   = pu_vbeln       and 
+                                DeliveryLnk~vbtyp_v = c_Delivery 
+            inner join Likp  on Likp~Vbeln          = DeliveryLnk~Vbelv 
+      where vbrk~vbeln = pu_Vbeln. 
+
+This code locates sales, delivery and payment terms info from a billing document number. 
+
+or
+
+Here, this one also works fine :
+
+select zfpcd~cadivi zfpcd~proforma zfpcd~factura zfpcd~aniofactura 
+zfpcd~montousd zfpcd~montoap zfpcd~ebeln zfpcd~inco1 
+zfpcd~lifnr lfa1~name1 zcdvs~status zfpcd~conint 
+into it_lista 
+from zfpcd inner join zcdvs 
+on zfpcd~ebeln = zcdvs~ebeln 
+and zfpcd~proforma = zcdvs~proforma 
+and zfpcd~lifnr = zcdvs~lifnr 
+inner join lfa1 
+on zfpcd~lifnr = lfa1~lifnr 
+where zcdvs~status = '04'. 
