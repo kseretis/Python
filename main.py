@@ -10,20 +10,22 @@ My Drive
 from Record import Record   # Importing class from Record.py
 import xlsxwriter
 key = "'"                   # Global keyword
-stopKeyword = "STOP"        # Stop param
 counter = 0                 # Counter
 myList = []                 # Our List
-exceps = []                 # Exceptions List
+exceptionList = []          # Exceptions List
+preList = ["CALL FUNCTION", "VALUE", "DATA", "DEFAULT", "AUTHORITY-CHECK", "ID"]                
 
 # Opening the file
 file = open("input.txt", "r")
 
+testv = "Test"
+
 # Detect the value inside the '
-# <-- returns the value
+# <-- returns the values list
 def getNestedValue(raw):
     flag = False            # Flag
     nestedValue = ""        # Nested value
-    valuesList = []
+    valuesList = []         # Nested values list
 
     for index in raw:
         if index == key:
@@ -40,22 +42,14 @@ def getNestedValue(raw):
     return valuesList
 
 # exceptions
-def checkForKeywords(text):
-    exceps.append("SE11")
-    exceps.append("BKPF")
-    exceps.append("VBPA")
-    exceps.append("MKPF")
-    exceps.append("VF11")
-    exceps.append("VBRK")
-    exceps.append("BSET")
-    exceps.append("AG")
-    exceps.append("WE")
-    exceps.append("E1EDKA1")
-    exceps.append("E1EDK03")
+def fillListWithExceptions():
+    file = open("Exceptions.txt")
+    exceLines = file.read().splitlines()
+    
+    for raw in exceLines:
+        exceptionList.append(raw)
 
-    if text in exceps:
-        return False
-    return True
+    file.close()
 
 def setExceptions():
     stopParam = True
@@ -67,11 +61,11 @@ def setExceptions():
             stopParam = False
         exceps.append(tmpInput)
     
-
 # Check the value's length, create a new record
 # & append to the list
 def createNewRecord(line, text):
-    if len(text) > 1 and checkForKeywords(text):
+    if len(text) > 1:
+        # if text not in exceptionList:
         newRecord = Record(line, text)
         myList.append(newRecord)
 
@@ -87,21 +81,26 @@ def writeToXls():
 
     workbook.close()
 
+def checkPreList(raw):
+    for sbString in preList:
+        if sbString in raw:
+            return False
+    return True
+
 # Reading the lines from the txt file
 lines = file.readlines()
-setExceptions()
+# Reading file with exceptions
+# fillListWithExceptions()
 
 # Reading line by line the txt files
 for line in lines:
     counter += 1    # Counts the lines
     if key in line:
-        if "CALL FUNCTION" not in line:
-            #countTheApost(line)
+        if checkPreList(line):
             valueList = getNestedValue(line)
             for index in valueList:
                 createNewRecord(counter, index)
         
-
 # Loop at list to print the stored elements
 for obj in myList:
     print(obj.line , " - ", obj.value )
