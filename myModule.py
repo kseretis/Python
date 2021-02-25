@@ -1,23 +1,3 @@
-myModule.py
-Not shared
-Type
-Text
-Size
-2 KB (2,398 bytes)
-Storage used
-2 KB (2,398 bytes)
-Location
-Python SAP Seperator
-Owner
-me
-Modified
-5:32 PM by me
-Opened
-9:23 PM by me
-Created
-5:33 PM with Google Drive Web
-Add a description
-Viewers can download
 from Record import Record       # Importing class from Record.py
 import os, xlsxwriter           # libs
 
