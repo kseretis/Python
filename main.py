@@ -1,3 +1,4 @@
+My Drive
 #------------------------------------------------------------#
 # This is demo program has been developed by @kseretis for
 # business purposes. 
@@ -9,8 +10,10 @@
 from Record import Record   # Importing class from Record.py
 import xlsxwriter
 key = "'"                   # Global keyword
+stopKeyword = "STOP"        # Stop param
 counter = 0                 # Counter
 myList = []                 # Our List
+exceps = []                 # Exceptions List
 
 # Opening the file
 file = open("input.txt", "r")
@@ -20,33 +23,57 @@ file = open("input.txt", "r")
 def getNestedValue(raw):
     flag = False            # Flag
     nestedValue = ""        # Nested value
+    valuesList = []
 
     for index in raw:
         if index == key:
             if flag:
                 flag = False
+                valuesList.append(nestedValue)
+                nestedValue = ""
             else:
                 flag = True
                 continue
         if flag:
             nestedValue += index
 
-    return nestedValue
+    return valuesList
+
+# exceptions
+def checkForKeywords(text):
+    exceps.append("SE11")
+    exceps.append("BKPF")
+    exceps.append("VBPA")
+    exceps.append("MKPF")
+    exceps.append("VF11")
+    exceps.append("VBRK")
+    exceps.append("BSET")
+    exceps.append("AG")
+    exceps.append("WE")
+    exceps.append("E1EDKA1")
+    exceps.append("E1EDK03")
+
+    if text in exceps:
+        return False
+    return True
+
+def setExceptions():
+    stopParam = True
+    print("Enter exceptions: ")
+    while stopParam:
+        tmpInput = input()
+    
+        if tmpInput == stopKeyword:
+            stopParam = False
+        exceps.append(tmpInput)
+    
 
 # Check the value's length, create a new record
 # & append to the list
 def createNewRecord(line, text):
-    if len(text) > 1:
+    if len(text) > 1 and checkForKeywords(text):
         newRecord = Record(line, text)
         myList.append(newRecord)
-
-# Count the ' in the line
-def countTheApost(line):
-    miniCounter = 0
-    for index in line:
-        if index == key:
-            miniCounter += 1
-    return miniCounter
 
 # Create new xls file and write the new data
 def writeToXls():
@@ -62,14 +89,18 @@ def writeToXls():
 
 # Reading the lines from the txt file
 lines = file.readlines()
+setExceptions()
 
 # Reading line by line the txt files
 for line in lines:
     counter += 1    # Counts the lines
     if key in line:
-        #countTheApost(line)
-        value = getNestedValue(line)
-        createNewRecord(counter, value)
+        if "CALL FUNCTION" not in line:
+            #countTheApost(line)
+            valueList = getNestedValue(line)
+            for index in valueList:
+                createNewRecord(counter, index)
+        
 
 # Loop at list to print the stored elements
 for obj in myList:
@@ -77,9 +108,6 @@ for obj in myList:
 
 # Call the writting func
 writeToXls()
-
-# TODO Create a new excel file and store the object 
-# list that has been extraxted
 
 # Closing the file
 file.close()
