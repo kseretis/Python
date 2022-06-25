@@ -1,1 +1,1 @@
-It's a tool for abap that gets as an input parameter a txt file with abap code and exports a xlsx file with the hardcoded values.
+It's a tool for abap that gets as an input parameter a txt file with abap code and exports a xlsx file with the hard-coded values.
